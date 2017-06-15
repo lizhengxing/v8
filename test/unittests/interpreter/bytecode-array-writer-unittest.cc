@@ -25,7 +25,7 @@ class BytecodeArrayWriterUnittest : public TestWithIsolateAndZone {
   BytecodeArrayWriterUnittest()
       : constant_array_builder_(zone()),
         bytecode_array_writer_(
-            zone(), &constant_array_builder_,
+            isolate(), zone(), &constant_array_builder_,
             SourcePositionTableBuilder::RECORD_SOURCE_POSITIONS) {}
   ~BytecodeArrayWriterUnittest() override {}
 

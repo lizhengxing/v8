@@ -242,14 +242,16 @@ Node* InterpreterAssembler::NextRegister(Node* reg_index) {
 }
 
 Node* InterpreterAssembler::OperandOffset(int operand_index) {
+//zxli add for direct-threading
   return IntPtrConstant(
-      Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale()));
+      Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale())+8);
 }
 
 Node* InterpreterAssembler::BytecodeOperandUnsignedByte(int operand_index) {
   DCHECK_LT(operand_index, Bytecodes::NumberOfOperands(bytecode_));
   DCHECK_EQ(OperandSize::kByte, Bytecodes::GetOperandSize(
                                     bytecode_, operand_index, operand_scale()));
+//zxli add for direct-threading
   Node* operand_offset = OperandOffset(operand_index);
   return Load(MachineType::Uint8(), BytecodeArrayTaggedPointer(),
               IntPtrAdd(BytecodeOffset(), operand_offset));
@@ -259,6 +261,7 @@ Node* InterpreterAssembler::BytecodeOperandSignedByte(int operand_index) {
   DCHECK_LT(operand_index, Bytecodes::NumberOfOperands(bytecode_));
   DCHECK_EQ(OperandSize::kByte, Bytecodes::GetOperandSize(
                                     bytecode_, operand_index, operand_scale()));
+//zxli add for direct-threading
   Node* operand_offset = OperandOffset(operand_index);
   return Load(MachineType::Int8(), BytecodeArrayTaggedPointer(),
               IntPtrAdd(BytecodeOffset(), operand_offset));
@@ -300,7 +303,8 @@ compiler::Node* InterpreterAssembler::BytecodeOperandReadUnaligned(
   compiler::Node* bytes[kMaxCount];
   for (int i = 0; i < count; i++) {
     MachineType machine_type = (i == 0) ? msb_type : MachineType::Uint8();
-    Node* offset = IntPtrConstant(relative_offset + msb_offset + i * kStep);
+//zxli add for direct-threading.
+    Node* offset = IntPtrConstant(relative_offset + msb_offset + i * kStep +8);
     Node* array_offset = IntPtrAdd(BytecodeOffset(), offset);
     bytes[i] = Load(machine_type, BytecodeArrayTaggedPointer(), array_offset);
   }
@@ -323,8 +327,9 @@ Node* InterpreterAssembler::BytecodeOperandUnsignedShort(int operand_index) {
   int operand_offset =
       Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale());
   if (TargetSupportsUnalignedAccess()) {
+//zxli add for direct-threading
     return Load(MachineType::Uint16(), BytecodeArrayTaggedPointer(),
-                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset)));
+                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset+8)));
   } else {
     return BytecodeOperandReadUnaligned(operand_offset, MachineType::Uint16());
   }
@@ -338,8 +343,9 @@ Node* InterpreterAssembler::BytecodeOperandSignedShort(int operand_index) {
   int operand_offset =
       Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale());
   if (TargetSupportsUnalignedAccess()) {
+//zxli add for direct-threading
     return Load(MachineType::Int16(), BytecodeArrayTaggedPointer(),
-                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset)));
+                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset+8)));
   } else {
     return BytecodeOperandReadUnaligned(operand_offset, MachineType::Int16());
   }
@@ -352,8 +358,9 @@ Node* InterpreterAssembler::BytecodeOperandUnsignedQuad(int operand_index) {
   int operand_offset =
       Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale());
   if (TargetSupportsUnalignedAccess()) {
+//zxli add for direct-threading
     return Load(MachineType::Uint32(), BytecodeArrayTaggedPointer(),
-                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset)));
+                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset+8)));
   } else {
     return BytecodeOperandReadUnaligned(operand_offset, MachineType::Uint32());
   }
@@ -366,8 +373,9 @@ Node* InterpreterAssembler::BytecodeOperandSignedQuad(int operand_index) {
   int operand_offset =
       Bytecodes::GetOperandOffset(bytecode_, operand_index, operand_scale());
   if (TargetSupportsUnalignedAccess()) {
+//zxli add for direct-threading
     return Load(MachineType::Int32(), BytecodeArrayTaggedPointer(),
-                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset)));
+                IntPtrAdd(BytecodeOffset(), IntPtrConstant(operand_offset+8)));
   } else {
     return BytecodeOperandReadUnaligned(operand_offset, MachineType::Int32());
   }
@@ -974,7 +982,8 @@ void InterpreterAssembler::UpdateInterruptBudget(Node* weight, bool backward) {
 }
 
 Node* InterpreterAssembler::Advance() {
-  return Advance(Bytecodes::Size(bytecode_, operand_scale_));
+  //return Advance(Bytecodes::Size(bytecode_, operand_scale_));
+  return Advance(Bytecodes::Size(bytecode_, operand_scale_)+8);
 }
 
 Node* InterpreterAssembler::Advance(int delta) {
@@ -987,6 +996,9 @@ Node* InterpreterAssembler::Advance(Node* delta, bool backward) {
   }
   Node* next_offset = backward ? IntPtrSub(BytecodeOffset(), delta)
                                : IntPtrAdd(BytecodeOffset(), delta);
+  // zxli add for direct-threading
+  //next_offset = IntPtrSub(next_offset, IntPtrConstant(8));
+
   bytecode_offset_.Bind(next_offset);
   return next_offset;
 }
@@ -994,10 +1006,24 @@ Node* InterpreterAssembler::Advance(Node* delta, bool backward) {
 Node* InterpreterAssembler::Jump(Node* delta, bool backward) {
   DCHECK(!Bytecodes::IsStarLookahead(bytecode_, operand_scale_));
 
+  // zxli add for direct-threading
+//  if(backward)
+//    delta = IntPtrAdd(delta, IntPtrConstant(1<<kPointerSizeLog2));
+//  else
+//    delta = IntPtrSub(delta, IntPtrConstant(1<<kPointerSizeLog2));
+
   UpdateInterruptBudget(TruncateWordToWord32(delta), backward);
   Node* new_bytecode_offset = Advance(delta, backward);
-  Node* target_bytecode = LoadBytecode(new_bytecode_offset);
-  return DispatchToBytecode(target_bytecode, new_bytecode_offset);
+//  Node* target_bytecode = LoadBytecode(new_bytecode_offset);
+//  return DispatchToBytecode(target_bytecode, new_bytecode_offset);
+
+  // zxli add for direct-threading.
+  Node* target_code_entry = LoadBytecodeHandler(new_bytecode_offset);
+//  new_bytecode_offset = Advance(1<<kPointerSizeLog2);
+
+  // zxli add for direct-threading
+  return DispatchToBytecodeHandlerEntry(target_code_entry, new_bytecode_offset);
+
 }
 
 Node* InterpreterAssembler::Jump(Node* delta) { return Jump(delta, false); }
@@ -1025,11 +1051,24 @@ void InterpreterAssembler::JumpIfWordNotEqual(Node* lhs, Node* rhs,
   JumpConditional(WordNotEqual(lhs, rhs), delta);
 }
 
+//Node* InterpreterAssembler::LoadBytecode(compiler::Node* bytecode_offset) {
+//  Node* bytecode =
+//      Load(MachineType::Uint8(), BytecodeArrayTaggedPointer(), bytecode_offset);
+//  return ChangeUint32ToWord(bytecode);
+//}
+
+// zxli add for direct-threading.
 Node* InterpreterAssembler::LoadBytecode(compiler::Node* bytecode_offset) {
   Node* bytecode =
-      Load(MachineType::Uint8(), BytecodeArrayTaggedPointer(), bytecode_offset);
+      Load(MachineType::Uint8(), BytecodeArrayTaggedPointer(), IntPtrAdd(bytecode_offset, IntPtrConstant(8)));
   return ChangeUint32ToWord(bytecode);
 }
+Node* InterpreterAssembler::LoadBytecodeHandler(compiler::Node* bytecode_offset) {
+  Node* bytecodehandler =
+      Load(MachineType::Uint64(), BytecodeArrayTaggedPointer(), bytecode_offset);
+  return bytecodehandler;
+}
+
 
 Node* InterpreterAssembler::StarDispatchLookahead(Node* target_bytecode) {
   Label do_inline_star(this), done(this);
@@ -1049,6 +1088,28 @@ Node* InterpreterAssembler::StarDispatchLookahead(Node* target_bytecode) {
   }
   Bind(&done);
   return var_bytecode.value();
+}
+
+// zxli add for direct-threading
+Node* InterpreterAssembler::StarDispatchLookaheadEntry(Node* target_bytecode, Node* target_bytecode_entry) {
+  Label do_inline_star(this), done(this);
+
+  Variable var_bytecode_entry(this, MachineType::PointerRepresentation());
+  var_bytecode_entry.Bind(target_bytecode_entry);
+
+  Node* star_bytecode = IntPtrConstant(static_cast<int>(Bytecode::kStar));
+  Node* is_star = WordEqual(target_bytecode, star_bytecode);
+  Branch(is_star, &do_inline_star, &done);
+
+  Bind(&do_inline_star);
+  {
+    InlineStar();
+    var_bytecode_entry.Bind(LoadBytecodeHandler(BytecodeOffset()));
+//    Advance(1<<kPointerSizeLog2);
+    Goto(&done);
+  }
+  Bind(&done);
+  return var_bytecode_entry.value();
 }
 
 void InterpreterAssembler::InlineStar() {
@@ -1074,12 +1135,21 @@ Node* InterpreterAssembler::Dispatch() {
   Comment("========= Dispatch");
   DCHECK_IMPLIES(Bytecodes::MakesCallAlongCriticalPath(bytecode_), made_call_);
   Node* target_offset = Advance();
-  Node* target_bytecode = LoadBytecode(target_offset);
+//  Node* target_bytecode = LoadBytecode(target_offset);
+
+  Node* target_code_entry = LoadBytecodeHandler(target_offset);
+  // zxli add for direct-threading.
+//  target_offset = Advance(1<<kPointerSizeLog2);
 
   if (Bytecodes::IsStarLookahead(bytecode_, operand_scale_)) {
-    target_bytecode = StarDispatchLookahead(target_bytecode);
+    // zxli add for direct-threading
+    Node* target_bytecode = LoadBytecode(target_offset);
+    target_code_entry = StarDispatchLookaheadEntry(target_bytecode, target_code_entry);
   }
-  return DispatchToBytecode(target_bytecode, BytecodeOffset());
+//  return DispatchToBytecode(target_bytecode, BytecodeOffset());
+
+  // zxli add for direct-threading
+  return DispatchToBytecodeHandlerEntry(target_code_entry, BytecodeOffset());
 }
 
 Node* InterpreterAssembler::DispatchToBytecode(Node* target_bytecode,
@@ -1121,30 +1191,36 @@ void InterpreterAssembler::DispatchWide(OperandScale operand_scale) {
   //   Indices 256-511 correspond to bytecodes with operand_scale == 1
   //   Indices 512-767 correspond to bytecodes with operand_scale == 2
   DCHECK_IMPLIES(Bytecodes::MakesCallAlongCriticalPath(bytecode_), made_call_);
-  Node* next_bytecode_offset = Advance(1);
-  Node* next_bytecode = LoadBytecode(next_bytecode_offset);
-
-  if (FLAG_trace_ignition_dispatches) {
-    TraceBytecodeDispatch(next_bytecode);
-  }
-
-  Node* base_index;
-  switch (operand_scale) {
-    case OperandScale::kDouble:
-      base_index = IntPtrConstant(1 << kBitsPerByte);
-      break;
-    case OperandScale::kQuadruple:
-      base_index = IntPtrConstant(2 << kBitsPerByte);
-      break;
-    default:
-      UNREACHABLE();
-      base_index = nullptr;
-  }
-  Node* target_index = IntPtrAdd(base_index, next_bytecode);
-  Node* target_code_entry =
-      Load(MachineType::Pointer(), DispatchTableRawPointer(),
-           WordShl(target_index, kPointerSizeLog2));
-
+  Node* next_bytecode_offset = Advance(1+8);
+//  Node* next_bytecode = LoadBytecode(next_bytecode_offset);
+//
+//
+//  if (FLAG_trace_ignition_dispatches) {
+//    TraceBytecodeDispatch(next_bytecode);
+//  }
+//
+//  Node* base_index;
+//  switch (operand_scale) {
+//    case OperandScale::kDouble:
+//      base_index = IntPtrConstant(1 << kBitsPerByte);
+//      break;
+//    case OperandScale::kQuadruple:
+//      base_index = IntPtrConstant(2 << kBitsPerByte);
+//      break;
+//    default:
+//      UNREACHABLE();
+//      base_index = nullptr;
+//  }
+//  Node* target_index = IntPtrAdd(base_index, next_bytecode);
+//  Node* target_code_entry =
+//      Load(MachineType::Pointer(), DispatchTableRawPointer(),
+//           WordShl(target_index, kPointerSizeLog2));
+//
+//  DispatchToBytecodeHandlerEntry(target_code_entry, next_bytecode_offset);
+  // zxli add for direct-threading.
+  Node* target_code_entry = LoadBytecodeHandler(next_bytecode_offset);
+//  next_bytecode_offset = Advance(1<<kPointerSizeLog2);
+  // zxli add for direct-threading
   DispatchToBytecodeHandlerEntry(target_code_entry, next_bytecode_offset);
 }
 

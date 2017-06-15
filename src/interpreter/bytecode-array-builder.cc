@@ -17,11 +17,13 @@ namespace v8 {
 namespace internal {
 namespace interpreter {
 
+      // zxli add for direct-threading
 BytecodeArrayBuilder::BytecodeArrayBuilder(
     Isolate* isolate, Zone* zone, int parameter_count, int context_count,
     int locals_count, FunctionLiteral* literal,
     SourcePositionTableBuilder::RecordingMode source_position_mode)
-    : zone_(zone),
+    : isolate_(isolate),
+      zone_(zone),
       literal_(literal),
       bytecode_generated_(false),
       constant_array_builder_(zone),
@@ -31,7 +33,7 @@ BytecodeArrayBuilder::BytecodeArrayBuilder(
       local_register_count_(locals_count),
       context_register_count_(context_count),
       register_allocator_(fixed_register_count()),
-      bytecode_array_writer_(zone, &constant_array_builder_,
+      bytecode_array_writer_(isolate, zone, &constant_array_builder_,
                              source_position_mode),
       pipeline_(&bytecode_array_writer_),
       register_optimizer_(nullptr) {

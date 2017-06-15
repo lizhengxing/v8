@@ -26,7 +26,7 @@ class V8_EXPORT_PRIVATE BytecodeArrayWriter final
     : public NON_EXPORTED_BASE(BytecodePipelineStage) {
  public:
   BytecodeArrayWriter(
-      Zone* zone, ConstantArrayBuilder* constant_array_builder,
+      Isolate* isolate, Zone* zone, ConstantArrayBuilder* constant_array_builder,
       SourcePositionTableBuilder::RecordingMode source_position_mode);
   virtual ~BytecodeArrayWriter();
 
@@ -65,6 +65,10 @@ class V8_EXPORT_PRIVATE BytecodeArrayWriter final
   void EmitJump(BytecodeNode* node, BytecodeLabel* label);
   void UpdateSourcePositionTable(const BytecodeNode* const node);
 
+  // zxli add for direct-threading
+  Address dispatch_table_;
+  Isolate* isolate() const { return isolate_; }
+
   ZoneVector<uint8_t>* bytecodes() { return &bytecodes_; }
   SourcePositionTableBuilder* source_position_table_builder() {
     return &source_position_table_builder_;
@@ -72,6 +76,9 @@ class V8_EXPORT_PRIVATE BytecodeArrayWriter final
   ConstantArrayBuilder* constant_array_builder() {
     return constant_array_builder_;
   }
+
+  // zxli add for direct-threading
+  Isolate* isolate_;
 
   ZoneVector<uint8_t> bytecodes_;
   int unbound_jumps_;

@@ -313,9 +313,15 @@ class V8_EXPORT_PRIVATE InterpreterAssembler : public CodeStubAssembler {
   // Load the bytecode at |bytecode_offset|.
   compiler::Node* LoadBytecode(compiler::Node* bytecode_offset);
 
+  // Load the bytecode handler at |bytecode_offset|. zxli add for direct-threading.
+  compiler::Node* LoadBytecodeHandler(compiler::Node* bytecode_offset);
+
   // Look ahead for Star and inline it in a branch. Returns a new target
   // bytecode node for dispatch.
   compiler::Node* StarDispatchLookahead(compiler::Node* target_bytecode);
+
+  // zxli add for direct-threading
+  compiler::Node* StarDispatchLookaheadEntry(compiler::Node* target_bytecode, compiler::Node* target_bytecode_entry);
 
   // Build code for Star at the current BytecodeOffset() and Advance() to the
   // next dispatch offset.

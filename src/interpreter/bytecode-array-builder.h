@@ -412,6 +412,9 @@ class V8_EXPORT_PRIVATE BytecodeArrayBuilder final
   }
   Zone* zone() const { return zone_; }
 
+  // zxli add for direct-threading
+  Isolate* isolate() const { return isolate_; }
+ 
  private:
   friend class BytecodeRegisterAllocator;
   template <Bytecode bytecode, AccumulatorUse accumulator_use,
@@ -462,6 +465,9 @@ class V8_EXPORT_PRIVATE BytecodeArrayBuilder final
   HandlerTableBuilder* handler_table_builder() {
     return &handler_table_builder_;
   }
+
+  // zxli add for direct-threading
+  Isolate* isolate_; 
 
   Zone* zone_;
   FunctionLiteral* literal_;

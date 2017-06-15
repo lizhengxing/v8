@@ -48,6 +48,12 @@ class Interpreter {
 
   // Return bytecode handler for |bytecode|.
   Code* GetBytecodeHandler(Bytecode bytecode, OperandScale operand_scale);
+  size_t GetDispatchTableIndexFromOpcode(Bytecode bytecode,
+                                         OperandScale operand_scale);
+
+
+  // Return bytecode handler Entry for |bytecode|. zxli add for direct-threading
+  Address GetBytecodeHandlerEntry(Bytecode bytecode, OperandScale operand_scale);
 
   // GC support.
   void IterateDispatchTable(ObjectVisitor* v);

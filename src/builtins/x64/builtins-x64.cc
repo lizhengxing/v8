@@ -724,10 +724,17 @@ void Builtins::Generate_InterpreterEntryTrampoline(MacroAssembler* masm) {
       ExternalReference::interpreter_dispatch_table_address(masm->isolate()));
 
   // Dispatch to the first bytecode handler for the function.
-  __ movzxbp(rbx, Operand(kInterpreterBytecodeArrayRegister,
+  // zxli add for direct-threading
+  __ movp(rbx, Operand(kInterpreterBytecodeArrayRegister,
                           kInterpreterBytecodeOffsetRegister, times_1, 0));
-  __ movp(rbx, Operand(kInterpreterDispatchTableRegister, rbx,
-                       times_pointer_size, 0));
+  // update Bytecode Offset to (bytecode+operands)
+  //__ addq(kInterpreterBytecodeOffsetRegister,  Immediate(1<<kPointerSizeLog2));
+
+//  __ movzxbp(rbx, Operand(kInterpreterBytecodeArrayRegister,
+//                          kInterpreterBytecodeOffsetRegister, times_1, 0));
+//  __ movp(rbx, Operand(kInterpreterDispatchTableRegister, rbx,
+//                       times_pointer_size, 0));
+  
   __ call(rbx);
   masm->isolate()->heap()->SetInterpreterEntryReturnPCOffset(masm->pc_offset());
 
@@ -986,10 +993,16 @@ static void Generate_InterpreterEnterBytecode(MacroAssembler* masm) {
                     kInterpreterBytecodeOffsetRegister);
 
   // Dispatch to the target bytecode.
-  __ movzxbp(rbx, Operand(kInterpreterBytecodeArrayRegister,
+//  __ movzxbp(rbx, Operand(kInterpreterBytecodeArrayRegister,
+//                          kInterpreterBytecodeOffsetRegister, times_1, 0));
+//  __ movp(rbx, Operand(kInterpreterDispatchTableRegister, rbx,
+//                       times_pointer_size, 0));
+  // zxli add for direct-threading
+  __ movp(rbx, Operand(kInterpreterBytecodeArrayRegister,
                           kInterpreterBytecodeOffsetRegister, times_1, 0));
-  __ movp(rbx, Operand(kInterpreterDispatchTableRegister, rbx,
-                       times_pointer_size, 0));
+  // update Bytecode Offset to (bytecode+operands)
+//  __ addq(kInterpreterBytecodeOffsetRegister,  Immediate(1<<kPointerSizeLog2));
+
   __ jmp(rbx);
 }
 

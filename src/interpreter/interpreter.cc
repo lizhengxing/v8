@@ -149,6 +149,7 @@ void Interpreter::InstallBytecodeHandler(Zone* zone, Bytecode bytecode,
   Handle<Code> code = compiler::CodeAssembler::GenerateCode(&state);
   size_t index = GetDispatchTableIndex(bytecode, operand_scale);
   dispatch_table_[index] = code->entry();
+//  printf("Interpreter::InstallBytecodeHandler: index is %d, address is 0x%lx --\n", (int)index, reinterpret_cast<unsigned long>(dispatch_table_[index]));
   TraceCodegen(code);
   PROFILE(isolate_, CodeCreateEvent(
                         CodeEventListener::BYTECODE_HANDLER_TAG,
@@ -164,6 +165,22 @@ Code* Interpreter::GetBytecodeHandler(Bytecode bytecode,
   Address code_entry = dispatch_table_[index];
   return Code::GetCodeFromTargetAddress(code_entry);
 }
+
+// zxli add for direct-threading
+Address Interpreter::GetBytecodeHandlerEntry(Bytecode bytecode,
+                                      OperandScale operand_scale) {
+  DCHECK(IsDispatchTableInitialized());
+  DCHECK(Bytecodes::BytecodeHasHandler(bytecode, operand_scale));
+  size_t index = GetDispatchTableIndex(bytecode, operand_scale);
+  Address code_entry = dispatch_table_[index];
+  return code_entry;
+}
+
+size_t Interpreter::GetDispatchTableIndexFromOpcode(Bytecode bytecode,
+                                         OperandScale operand_scale) {
+    return GetDispatchTableIndex(bytecode, operand_scale);
+}
+
 
 // static
 size_t Interpreter::GetDispatchTableIndex(Bytecode bytecode,
