@@ -247,12 +247,14 @@ class ActivationsFinder : public ThreadVisitor {
         if (code.kind() == Code::OPTIMIZED_FUNCTION &&
             code.marked_for_deoptimization()) {
           codes_->erase(code);
+#if 0
           // Obtain the trampoline to the deoptimizer call.
           SafepointEntry safepoint = code.GetSafepointEntry(it.frame()->pc());
           int trampoline_pc = safepoint.trampoline_pc();
           DCHECK_IMPLIES(code == topmost_, safe_to_deopt_);
           // Replace the current pc on the stack with the trampoline.
           it.frame()->set_pc(code.raw_instruction_start() + trampoline_pc);
+#endif
         }
       }
     }

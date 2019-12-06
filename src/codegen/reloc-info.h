@@ -87,6 +87,9 @@ class RelocInfo {
     // cannot be encoded as part of another record.
     PC_JUMP,
 
+    // Store the code object address for CET.
+    CODE_OBJ_THIS,
+
     // Pseudo-types
     NUMBER_OF_MODES,
     NONE,  // never recorded value
@@ -175,6 +178,10 @@ class RelocInfo {
     return mode == OFF_HEAP_TARGET;
   }
   static constexpr bool IsNone(Mode mode) { return mode == NONE; }
+
+  static constexpr bool IsCodeObjThisMode(Mode mode) {
+    return mode == CODE_OBJ_THIS;
+  }
 
   static bool IsOnlyForSerializer(Mode mode) {
 #ifdef V8_TARGET_ARCH_IA32
@@ -342,6 +349,7 @@ class RelocInfo {
            ModeMask(RelocInfo::COMPRESSED_EMBEDDED_OBJECT) |
            ModeMask(RelocInfo::FULL_EMBEDDED_OBJECT) |
            ModeMask(RelocInfo::RUNTIME_ENTRY) |
+           ModeMask(RelocInfo::CODE_OBJ_THIS) |
            ModeMask(RelocInfo::RELATIVE_CODE_TARGET) | kApplyMask;
   }
 

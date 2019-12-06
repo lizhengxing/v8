@@ -119,6 +119,8 @@ void Code::CopyFromNoFlush(Heap* heap, const CodeDesc& desc) {
       Address p = it.rinfo()->target_runtime_entry(origin);
       it.rinfo()->set_target_runtime_entry(p, UPDATE_WRITE_BARRIER,
                                            SKIP_ICACHE_FLUSH);
+    } else if (RelocInfo::IsCodeObjThisMode(mode)) {
+      it.rinfo()->set_target_object(heap, *this, UPDATE_WRITE_BARRIER, SKIP_ICACHE_FLUSH);
     } else {
       intptr_t delta =
           raw_instruction_start() - reinterpret_cast<Address>(desc.buffer);

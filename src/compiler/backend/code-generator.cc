@@ -944,8 +944,30 @@ void CodeGenerator::RecordCallPosition(Instruction* instr) {
     FrameStateDescriptor* descriptor =
         GetDeoptimizationEntry(instr, frame_state_offset).descriptor();
     int pc_offset = tasm()->pc_offset();
-    BuildTranslation(instr, pc_offset, frame_state_offset,
-                     descriptor->state_combine());
+    DeoptimizationExit* const exit = 
+	    BuildTranslation(instr, pc_offset, frame_state_offset, descriptor->state_combine());
+
+    //  CET: Add deopt checking here for removing stack patching for lazy deopimization.
+    //  The deopt mark offset is: Code::kCodeDataContainerOffset - Code::kHeaderSize;
+    int offset = Code::kCodeDataContainerOffset - 1;
+
+    tasm()->Move(kScratchRegister, kZapValue, RelocInfo::CODE_OBJ_THIS);
+    tasm()->LoadTaggedPointerField(kScratchRegister,
+                                   Operand(kScratchRegister, offset));
+    tasm()->testl(FieldOperand(kScratchRegister,
+                               CodeDataContainer::kKindSpecificFlagsOffset),
+                  Immediate(1 << Code::kMarkedForDeoptimizationBit));
+
+    // if marked, doing deoptimization immediately.
+    Label continue_label;
+    BranchInfo branch;
+    branch.condition = kNotEqual;
+    branch.true_label = exit->label();
+    branch.false_label = &continue_label;
+    branch.fallthru = true;
+    // Assemble architecture-specific branch.
+    AssembleArchDeoptBranch(instr, &branch);
+    tasm()->bind(&continue_label);
   }
 }
 

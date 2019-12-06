@@ -362,7 +362,8 @@ void RelocInfo::set_target_address(Address target,
                                    WriteBarrierMode write_barrier_mode,
                                    ICacheFlushMode icache_flush_mode) {
   DCHECK(IsCodeTargetMode(rmode_) || IsRuntimeEntry(rmode_) ||
-         IsWasmCall(rmode_));
+         IsWasmCall(rmode_) || IsCodeObjThisMode(rmode_));
+
   Assembler::set_target_address_at(pc_, constant_pool_, target,
                                    icache_flush_mode);
   if (write_barrier_mode == UPDATE_WRITE_BARRIER && !host().is_null() &&
@@ -439,6 +440,8 @@ const char* RelocInfo::RelocModeName(RelocInfo::Mode rmode) {
       return "internal wasm call";
     case WASM_STUB_CALL:
       return "wasm stub call";
+    case CODE_OBJ_THIS:
+      return "code obj this";
     case NUMBER_OF_MODES:
     case PC_JUMP:
       UNREACHABLE();
@@ -535,6 +538,7 @@ void RelocInfo::Verify(Isolate* isolate) {
     case WASM_CALL:
     case WASM_STUB_CALL:
     case NONE:
+    case CODE_OBJ_THIS:
       break;
     case NUMBER_OF_MODES:
     case PC_JUMP:

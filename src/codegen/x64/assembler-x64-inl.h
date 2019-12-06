@@ -353,7 +353,7 @@ Address RelocInfo::target_internal_reference_address() {
 void RelocInfo::set_target_object(Heap* heap, HeapObject target,
                                   WriteBarrierMode write_barrier_mode,
                                   ICacheFlushMode icache_flush_mode) {
-  DCHECK(IsCodeTarget(rmode_) || IsEmbeddedObjectMode(rmode_));
+  DCHECK(IsCodeTarget(rmode_) || IsEmbeddedObjectMode(rmode_) || IsCodeObjThisMode(rmode_));
   if (IsCompressedEmbeddedObject(rmode_)) {
     DCHECK(COMPRESS_POINTERS_BOOL);
     Tagged_t tagged = CompressTagged(target.ptr());
