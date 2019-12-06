@@ -212,7 +212,7 @@ void Deoptimizer::GenerateDeoptimizationEntries(MacroAssembler* masm,
           Immediate(1));
 
   // Return to the continuation point.
-  __ ret(0);
+  __ Ret(0);
 }
 
 Float32 RegisterValues::GetFloatRegister(unsigned n) const {
@@ -239,6 +239,13 @@ void FrameDescription::SetCallerFp(unsigned offset, intptr_t value) {
 void FrameDescription::SetCallerConstantPool(unsigned offset, intptr_t value) {
   // No embedded constant pool support.
   UNREACHABLE();
+}
+
+//zxli add for CET.
+intptr_t FrameDescription::SetCetRetCheckFlagToPc(intptr_t value) {
+  intptr_t d = kCetRetInValidFlag;
+  return (d<<48) | (value & 0x0000ffffffffffff);
+ // return (0xAAAA000000000000) | (value & 0x0000ffffffffffff);
 }
 
 #undef __
