@@ -252,7 +252,13 @@ class ActivationsFinder : public ThreadVisitor {
           int trampoline_pc = safepoint.trampoline_pc();
           DCHECK_IMPLIES(code == topmost_, safe_to_deopt_);
           // Replace the current pc on the stack with the trampoline.
-          it.frame()->set_pc(code.raw_instruction_start() + trampoline_pc);
+#if 1
+	  //int bailout_handler_pc = it.frame()->SetCetRetCheckFlagToPc(code.raw_instruction_start() + trampoline_pc);
+	  intptr_t bailout_handler_pc = (0xAAAA000000000000) | (((code.raw_instruction_start() + trampoline_pc)) & 0x0000ffffffffffff);
+
+          it.frame()->set_pc(bailout_handler_pc);
+         // it.frame()->set_pc(code.raw_instruction_start() + trampoline_pc);
+#endif
         }
       }
     }

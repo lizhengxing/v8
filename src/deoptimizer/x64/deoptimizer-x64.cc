@@ -121,7 +121,11 @@ void Deoptimizer::GenerateDeoptimizationEntries(MacroAssembler* masm,
   // Remove the return address from the stack.
   __ addq(rsp, Immediate(kPCOnStackSize));
   // CET: Remove the return address from the stack. need to update the shadow stack.
-  __ movq(kScratchRegister, Immediate(1));
+  // CET: lazy bailout need to skip 2 return address (optimzed code and bailout handler).
+  if (deopt_kind != DeoptimizeKind::kLazy)
+    __ movq(kScratchRegister, Immediate(1));
+  else  // CET: lazy bailout need to skip 2 return address (optimzed code and bailout handler) 
+    __ movq(kScratchRegister, Immediate(2));
   __ incsspq(kScratchRegister);
 
   // Compute a pointer to the unwinding limit in register rcx; that is
