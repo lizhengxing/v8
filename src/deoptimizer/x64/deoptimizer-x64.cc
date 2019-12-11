@@ -120,6 +120,9 @@ void Deoptimizer::GenerateDeoptimizationEntries(MacroAssembler* masm,
 
   // Remove the return address from the stack.
   __ addq(rsp, Immediate(kPCOnStackSize));
+  // CET: Remove the return address from the stack. need to update the shadow stack.
+  __ movq(kScratchRegister, Immediate(1));
+  __ incsspq(kScratchRegister);
 
   // Compute a pointer to the unwinding limit in register rcx; that is
   // the first stack slot not part of the input frame.
